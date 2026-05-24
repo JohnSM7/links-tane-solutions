@@ -1,0 +1,20 @@
+runConfig:
+  runtime: nodejs20
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+scripts:
+  build: npm ci && npm run build
+
+env:
+  - variable: HOST
+    value: 0.0.0.0
+  - variable: PORT
+    value: "8080"
+  - variable: SUPABASE_URL
+    secret: SUPABASE_URL
+  - variable: SUPABASE_ANON_KEY
+    secret: SUPABASE_ANON_KEY
+  - variable: ADMIN_SECRET
+    secret: ADMIN_SECRET
