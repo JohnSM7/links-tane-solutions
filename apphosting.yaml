@@ -15,7 +15,9 @@ env:
     value: "8080"
   - variable: SUPABASE_URL
     secret: SUPABASE_URL
-  - variable: SUPABASE_ANON_KEY
-    secret: SUPABASE_ANON_KEY
+  - variable: SUPABASE_SERVICE_KEY
+    secret: SUPABASE_SERVICE_KEY
+  - variable: ADMIN_PASSWORD
+    secret: ADMIN_PASSWORD
   - variable: ADMIN_SECRET
     secret: ADMIN_SECRET
