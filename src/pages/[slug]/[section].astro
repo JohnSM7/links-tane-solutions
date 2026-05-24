@@ -38,7 +38,9 @@ const htmlContent = section.contenido ? marked(section.contenido) : ''
 ---
 
 <PropertyLayout client={client} title={section.titulo}>
-  <div class="max-w-md mx-auto px-4 pt-8 pb-12">
+
+  <!-- Contenido principal (estrecho) -->
+  <div class="max-w-md mx-auto px-4 pt-8 pb-6">
 
     <!-- Back navigation -->
     <a href={`/${slug}`} class="back-link">
@@ -94,34 +96,47 @@ const htmlContent = section.contenido ? marked(section.contenido) : ''
         set:html={htmlContent}
       />
     )}
+  </div>
 
-    <!-- PDF viewer -->
-    {section.pdf_url && (
-      <div class={`pdf-block ${htmlContent || sectionLinks.length > 0 ? 'has-content' : ''}`}>
+  <!-- PDF — fuera del contenedor estrecho, ancho completo -->
+  {section.pdf_url && (
+    <div class={`pdf-section ${htmlContent || sectionLinks.length > 0 ? 'has-content' : ''}`}>
+
+      <!-- Botón siempre visible (especialmente útil en móvil) -->
+      <div class="pdf-btn-wrap">
         <a href={section.pdf_url} target="_blank" rel="noopener noreferrer" class="pdf-btn">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true" class="flex-shrink-0">
             <path d="M11 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-6-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
             <path d="M11 2v6h6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
             <path d="M7 13h6M7 10h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          <span>Ver documento PDF</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" class="pdf-arrow">
-            <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <span>Abrir documento completo</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" class="flex-shrink-0 opacity-50">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </a>
-
-        <!-- Inline preview for desktop -->
-        <div class="pdf-embed-wrap">
-          <iframe
-            src={`${section.pdf_url}#view=FitH`}
-            class="pdf-embed"
-            title={`PDF: ${section.titulo}`}
-            loading="lazy"
-          />
-        </div>
       </div>
-    )}
-  </div>
+
+      <!-- Iframe embebido — solo desktop, oculto en móvil -->
+      <div class="pdf-embed-wrap">
+        <iframe
+          src={`${section.pdf_url}#toolbar=1&view=FitH&zoom=page-width`}
+          class="pdf-embed"
+          title={`PDF: ${section.titulo}`}
+          loading="lazy"
+          allowfullscreen
+        />
+      </div>
+
+      <!-- Aviso móvil -->
+      <p class="pdf-mobile-hint">
+        📄 Tu dispositivo no muestra el PDF aquí — usa el botón de arriba para abrirlo.
+      </p>
+
+    </div>
+  )}
+
+  <div class="pb-12"></div>
 </PropertyLayout>
 
 <style>
@@ -215,53 +230,77 @@ const htmlContent = section.contenido ? marked(section.contenido) : ''
     border-top: 1px solid color-mix(in srgb, var(--brand-primary) 10%, transparent);
   }
 
-  /* PDF */
-  .pdf-block { margin-top: 1.5rem; }
-  .pdf-block.has-content {
-    margin-top: 2rem;
-    padding-top: 2rem;
+  /* ── PDF ── */
+  .pdf-section {
+    width: 100%;
+    padding: 0 16px 0;
+  }
+  .pdf-section.has-content {
+    padding-top: 1.5rem;
     border-top: 1px solid color-mix(in srgb, var(--brand-primary) 10%, transparent);
+    margin-top: 0;
   }
 
+  /* Botón */
+  .pdf-btn-wrap {
+    max-width: 600px;
+    margin: 0 auto 1rem;
+  }
   .pdf-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
-    padding: 14px 16px;
+    padding: 16px 20px;
     background: white;
-    border: 1.5px solid color-mix(in srgb, var(--brand-primary) 15%, transparent);
-    border-radius: 14px;
+    border: 1.5px solid color-mix(in srgb, var(--brand-primary) 18%, transparent);
+    border-radius: 16px;
     color: var(--brand-primary);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: box-shadow 180ms ease, border-color 180ms ease;
-    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    transition: box-shadow 180ms ease, border-color 180ms ease, transform 180ms ease;
   }
   .pdf-btn:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    border-color: color-mix(in srgb, var(--brand-accent) 60%, transparent);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    border-color: color-mix(in srgb, var(--brand-accent) 70%, transparent);
+    transform: translateY(-1px);
   }
   .pdf-btn span { flex: 1; }
-  .pdf-arrow { opacity: 0.4; }
 
+  /* iframe — visible solo en desktop */
   .pdf-embed-wrap {
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--brand-primary) 10%, transparent);
-    background: #f5f5f5;
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 12%, transparent);
+    background: #f0f0f0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
   }
   .pdf-embed {
     width: 100%;
-    height: 500px;
+    height: calc(100vh - 200px);
+    min-height: 500px;
+    max-height: 900px;
     border: none;
     display: block;
   }
 
-  @media (max-width: 480px) {
-    .pdf-embed { height: 360px; }
+  /* Aviso móvil — oculto en desktop */
+  .pdf-mobile-hint {
+    display: none;
+    text-align: center;
+    font-size: 0.8rem;
+    opacity: 0.5;
+    margin-top: 0.5rem;
+    color: var(--brand-primary);
+  }
+
+  /* En móvil: ocultar iframe, mostrar aviso */
+  @media (max-width: 767px) {
+    .pdf-embed-wrap { display: none; }
+    .pdf-mobile-hint { display: block; }
+    .pdf-btn { font-size: 1rem; padding: 18px 20px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
