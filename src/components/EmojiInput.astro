@@ -1,0 +1,71 @@
+---
+interface Props {
+  name: string
+  value?: string
+  placeholder?: string
+}
+const { name, value = '', placeholder = '😀' } = Astro.props
+const uid = `emoji-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<div class="emoji-field" id={uid}>
+  <input type="hidden" name={name} value={value || placeholder} class="emoji-value" />
+  <button
+    type="button"
+    class="emoji-trigger w-full border border-gray-200 rounded-lg px-3 py-2 text-2xl text-center hover:bg-gray-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+    title="Elegir emoji"
+    aria-label="Abrir selector de emoji"
+  >
+    {value || placeholder}
+  </button>
+  <div class="emoji-popover hidden absolute z-50 mt-1 shadow-xl rounded-xl overflow-hidden">
+    <emoji-picker class="light"></emoji-picker>
+  </div>
+</div>
+
+<style>
+  .emoji-field { position: relative; }
+  .emoji-popover { border: 1px solid #e5e7eb; }
+  emoji-picker {
+    --border-radius: 12px;
+    --font-family: 'Inter', system-ui, sans-serif;
+    --background: #ffffff;
+    --border-color: #f3f4f6;
+    --indicator-color: #6366f1;
+    --input-border-color: #e5e7eb;
+    --input-font-color: #111827;
+    --button-hover-background: #f3f4f6;
+    height: 360px;
+  }
+</style>
+
+<script>
+  import 'emoji-picker-element'
+
+  function initPicker(field: HTMLElement) {
+    const trigger = field.querySelector<HTMLButtonElement>('.emoji-trigger')!
+    const popover = field.querySelector<HTMLElement>('.emoji-popover')!
+    const input = field.querySelector<HTMLInputElement>('.emoji-value')!
+    const picker = field.querySelector('emoji-picker')!
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation()
+      popover.classList.toggle('hidden')
+    })
+
+    picker.addEventListener('emoji-click', (e: any) => {
+      const emoji = e.detail.unicode as string
+      input.value = emoji
+      trigger.textContent = emoji
+      popover.classList.add('hidden')
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!field.contains(e.target as Node)) {
+        popover.classList.add('hidden')
+      }
+    })
+  }
+
+  document.querySelectorAll<HTMLElement>('.emoji-field').forEach(initPicker)
+</script>

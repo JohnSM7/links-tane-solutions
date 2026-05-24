@@ -1,0 +1,65 @@
+---
+import AdminLayout from '../../../../../../../layouts/AdminLayout.astro'
+import EmojiInput from '../../../../../../../components/EmojiInput.astro'
+import { supabase } from '../../../../../../../lib/supabase'
+import type { Client, Section } from '../../../../../../../lib/types'
+
+const { id, secId } = Astro.params
+
+const [{ data: client }, { data: section }] = await Promise.all([
+  supabase.from('clients').select('nombre').eq('id', id).single<Pick<Client, 'nombre'>>(),
+  supabase.from('sections').select('titulo').eq('id', secId).single<Pick<Section, 'titulo'>>(),
+])
+
+if (!client || !section) return Astro.redirect(`/admin/clientes/${id}`)
+---
+
+<AdminLayout title={`Nuevo link · ${section.titulo}`}>
+  <a href={`/admin/clientes/${id}/secciones/${secId}`} class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-8">
+    ← Volver a {section.titulo}
+  </a>
+
+  <form action="/admin/api/links" method="POST" class="space-y-6">
+    <input type="hidden" name="section_id" value={secId} />
+    <input type="hidden" name="client_id" value={id} />
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Título *</label>
+          <input name="titulo" type="text" required placeholder="Reseña en Booking"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Icono (emoji)</label>
+          <EmojiInput name="icono" placeholder="🏨" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">URL *</label>
+        <input name="url" type="url" required placeholder="https://www.booking.com/..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Descripción</label>
+        <input name="descripcion" type="text" placeholder="Déjanos tu valoración"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Orden</label>
+        <input name="orden" type="number" value="0" min="0"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit"
+        class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-700 transition-colors">
+        Crear link
+      </button>
+      <a href={`/admin/clientes/${id}/secciones/${secId}`} class="px-6 py-2.5 rounded-lg text-sm text-gray-500 hover:text-gray-700">
+        Cancelar
+      </a>
+    </div>
+  </form>
+</AdminLayout>

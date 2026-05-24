@@ -1,0 +1,34 @@
+---
+interface Props {
+  title: string
+  wide?: boolean
+}
+const { title, wide = false } = Astro.props
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} · Admin TaneLinks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="min-h-screen bg-gray-50 font-sans antialiased">
+    <nav class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <span class="font-bold text-gray-900 text-sm tracking-wide">TaneLinks Admin</span>
+        <a href="/admin/dashboard" class="text-sm text-gray-600 hover:text-gray-900">Clientes</a>
+        <a href="/admin/clientes/nuevo" class="text-sm text-gray-600 hover:text-gray-900">+ Nuevo cliente</a>
+      </div>
+      <form action="/admin/api/logout" method="POST">
+        <button type="submit" class="text-xs text-gray-400 hover:text-gray-600">Cerrar sesión</button>
+      </form>
+    </nav>
+    <main class={`${wide ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-6 py-10`}>
+      <h1 class="text-2xl font-bold text-gray-900 mb-8">{title}</h1>
+      <slot />
+    </main>
+  </body>
+</html>

@@ -1,0 +1,163 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+
+const error = Astro.url.searchParams.get('error')
+---
+
+<AdminLayout title="Nuevo cliente">
+  <form action="/admin/api/clients" method="POST" class="space-y-8">
+
+    <!-- Info básica -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Información básica</h2>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nombre del cliente *</label>
+          <input name="nombre" type="text" required placeholder="Casas LYB"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Slug (URL) *</label>
+          <input name="slug" type="text" required placeholder="casas-lyb"
+            pattern="[-a-z0-9]+"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          <p class="text-xs text-gray-400 mt-1">Solo minúsculas, números y guiones</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Ciudad</label>
+          <input name="ciudad" type="text" placeholder="Costa del Sol"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Texto adicional</label>
+          <input name="contacto_extra" type="text" placeholder="Horario: L–V 9–18h · Equipo: María y Juan"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          <p class="text-xs text-gray-400 mt-1">Se muestra bajo el subtítulo en la página pública</p>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Título del hero</label>
+        <input name="hero_titulo" type="text" placeholder="Bienvenidos a Casas LYB"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Subtítulo</label>
+        <input name="hero_subtitulo" type="text" placeholder="Toda la información para tu estancia"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">URL de imagen de portada</label>
+        <input name="hero_image_url" type="url" placeholder="https://..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+    </section>
+
+    <!-- Contacto -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Contacto</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">WhatsApp</label>
+          <input name="whatsapp" type="text" placeholder="+34 600 000 000"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Email</label>
+          <input name="email" type="email" placeholder="hola@negocio.com"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Marca -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Colores de marca</h2>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Color principal</label>
+          <div class="flex items-center gap-2">
+            <input type="color" name="brand_primary" value="#15264E" id="c-primary"
+              class="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-1" />
+            <input type="text" id="t-primary" value="#15264E"
+              class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Color de fondo</label>
+          <div class="flex items-center gap-2">
+            <input type="color" name="brand_background" value="#F8F2E6" id="c-bg"
+              class="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-1" />
+            <input type="text" id="t-bg" value="#F8F2E6"
+              class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Color acento</label>
+          <div class="flex items-center gap-2">
+            <input type="color" name="brand_accent" value="#C8A064" id="c-accent"
+              class="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-1" />
+            <input type="text" id="t-accent" value="#C8A064"
+              class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+        </div>
+      </div>
+      <!-- Preview -->
+      <div id="brand-preview" class="rounded-xl p-5 mt-2 transition-all">
+        <p id="preview-name" class="font-semibold text-lg">Nombre del cliente</p>
+        <p id="preview-sub" class="text-sm mt-1 opacity-60">Subtítulo de ejemplo</p>
+        <div id="preview-btn" class="mt-3 inline-block px-5 py-2.5 rounded-full text-sm font-medium">Sección de ejemplo</div>
+      </div>
+    </section>
+
+    {error && <p class="text-sm text-red-600">Error al guardar. Comprueba que el slug no está ya en uso.</p>}
+
+    <div class="flex gap-3">
+      <button type="submit"
+        class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-700 transition-colors">
+        Crear cliente
+      </button>
+      <a href="/admin/dashboard" class="px-6 py-2.5 rounded-lg text-sm text-gray-500 hover:text-gray-700">
+        Cancelar
+      </a>
+    </div>
+  </form>
+</AdminLayout>
+
+<script>
+  // Sync color pickers with text inputs and live preview
+  function syncColors() {
+    const pairs: [string, string][] = [['c-primary', 't-primary'], ['c-bg', 't-bg'], ['c-accent', 't-accent']]
+    const keys = ['primary', 'bg', 'accent']
+
+    function updatePreview() {
+      const p = (document.getElementById('t-primary') as HTMLInputElement).value
+      const bg = (document.getElementById('t-bg') as HTMLInputElement).value
+      const a = (document.getElementById('t-accent') as HTMLInputElement).value
+      const preview = document.getElementById('brand-preview')!
+      const btn = document.getElementById('preview-btn')!
+      preview.style.backgroundColor = bg
+      preview.style.color = p
+      btn.style.backgroundColor = p
+      btn.style.color = bg
+    }
+
+    pairs.forEach(([colorId, textId]) => {
+      const colorEl = document.getElementById(colorId) as HTMLInputElement
+      const textEl = document.getElementById(textId) as HTMLInputElement
+
+      colorEl.addEventListener('input', () => { textEl.value = colorEl.value; updatePreview() })
+      textEl.addEventListener('input', () => {
+        if (/^#[0-9a-fA-F]{6}$/.test(textEl.value)) { colorEl.value = textEl.value }
+        updatePreview()
+      })
+    })
+
+    updatePreview()
+  }
+  syncColors()
+</script>

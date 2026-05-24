@@ -1,0 +1,280 @@
+---
+import PropertyLayout from '../../layouts/PropertyLayout.astro'
+import SectionCard from '../../components/SectionCard.astro'
+import { supabase } from '../../lib/supabase'
+import type { Client, Section } from '../../lib/types'
+
+const { slug } = Astro.params
+
+const { data: client } = await supabase
+  .from('clients')
+  .select('*')
+  .eq('slug', slug)
+  .eq('activo', true)
+  .single<Client>()
+
+if (!client) return Astro.redirect('/', 302)
+
+const { data: sections } = await supabase
+  .from('sections')
+  .select('*')
+  .eq('client_id', client.id)
+  .eq('activo', true)
+  .order('orden', { ascending: true })
+
+const activeSections = (sections ?? []) as Section[]
+const waNumber = client.whatsapp?.replace(/\D/g, '')
+---
+
+<PropertyLayout client={client}>
+  <!-- Hero -->
+  <div class="hero-wrap relative overflow-hidden">
+    {client.hero_image_url ? (
+      <div class="hero-image-container">
+        <img
+          src={client.hero_image_url}
+          alt={client.nombre}
+          class="hero-image"
+          width="800"
+          height="400"
+        />
+        <div class="hero-image-overlay" />
+      </div>
+    ) : (
+      <div class="hero-placeholder" />
+    )}
+
+    <div class="hero-content max-w-md mx-auto px-5 py-12 text-center relative z-10">
+      {client.ciudad && (
+        <p class="eyebrow-text mb-3">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" class="inline mr-1.5" aria-hidden="true">
+            <circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6 2C4.34 2 3 3.34 3 5c0 2.5 3 5 3 5s3-2.5 3-5c0-1.66-1.34-3-3-3z" stroke="currentColor" stroke-width="1.3" fill="none"/>
+          </svg>
+          {client.ciudad}
+        </p>
+      )}
+
+      {!client.hero_image_url && (
+        client.logo_url ? (
+          <img
+            src={client.logo_url}
+            alt={`Logo de ${client.nombre}`}
+            class="client-logo mx-auto mb-5"
+            width="80"
+            height="80"
+          />
+        ) : (
+          <div class="logo-circle mx-auto mb-5">
+            <span class="logo-initial">{client.nombre.charAt(0)}</span>
+          </div>
+        )
+      )}
+
+      <h1 class="font-serif hero-title">
+        {client.hero_titulo || client.nombre}
+      </h1>
+
+      <!-- Gold ornament -->
+      <div class="ornament" aria-hidden="true">
+        <div class="ornament-line" />
+        <svg width="10" height="10" viewBox="0 0 10 10" class="ornament-diamond">
+          <path d="M5 0L10 5L5 10L0 5Z" fill="currentColor"/>
+        </svg>
+        <div class="ornament-line" />
+      </div>
+
+      {client.hero_subtitulo && (
+        <p class="hero-subtitle">{client.hero_subtitulo}</p>
+      )}
+      {client.contacto_extra && (
+        <p class="host-line">{client.contacto_extra}</p>
+      )}
+    </div>
+  </div>
+
+  <!-- Sections -->
+  <div class="max-w-md mx-auto px-4 pb-10">
+    {activeSections.length > 0 && (
+      <div class="sections-header">
+        <span class="sections-label">Información</span>
+      </div>
+    )}
+
+    <div class="flex flex-col gap-3">
+      {activeSections.map((section, i) => (
+        <SectionCard
+          href={`/${slug}/${section.slug}`}
+          icono={section.icono}
+          titulo={section.titulo}
+          descripcion={section.descripcion}
+          delay={i * 60}
+        />
+      ))}
+    </div>
+  </div>
+
+  <!-- WhatsApp FAB -->
+  {waNumber && (
+    <a
+      href={`https://wa.me/${waNumber}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="wa-fab"
+      aria-label="Contactar por WhatsApp"
+    >
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.31A9.945 9.945 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.946 7.946 0 01-4.052-1.107l-.29-.173-3.005.79.8-2.924-.19-.3A7.944 7.944 0 014 12c0-4.418 3.582-8 8-8s8 3.582 8 8-3.582 8-8 8z"/>
+      </svg>
+    </a>
+  )}
+</PropertyLayout>
+
+<style>
+  /* Hero */
+  .hero-wrap { position: relative; }
+
+  .hero-image-container { position: relative; height: 220px; overflow: hidden; }
+  .hero-image { width: 100%; height: 100%; object-fit: cover; }
+  .hero-image-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 100%);
+  }
+
+  .hero-placeholder {
+    height: 8px;
+    background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+  }
+
+  .hero-content { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+
+  /* When image is present, overlay text on top */
+  .hero-image-container ~ .hero-content {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding-top: 1rem; padding-bottom: 2rem;
+    color: white;
+  }
+
+  .eyebrow-text {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 500;
+    opacity: 0.65;
+    color: var(--brand-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-image-container ~ .hero-content .eyebrow-text { color: rgba(255,255,255,0.75); }
+
+  .client-logo {
+    width: 80px; height: 80px;
+    border-radius: 18px;
+    object-fit: contain;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  .logo-circle {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .logo-initial {
+    color: white;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--brand-primary);
+    margin: 0;
+  }
+  .hero-image-container ~ .hero-content .hero-title { color: white; }
+
+  /* Ornament */
+  .ornament {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    margin: 1rem auto;
+    width: 120px;
+    color: var(--brand-accent);
+  }
+  .hero-image-container ~ .hero-content .ornament { color: rgba(255,255,255,0.5); }
+  .ornament-line { flex: 1; height: 1px; background: currentColor; opacity: 0.5; }
+  .ornament-diamond { flex-shrink: 0; }
+
+  .hero-subtitle {
+    font-size: 0.875rem;
+    line-height: 1.65;
+    opacity: 0.7;
+    margin: 0 0 0.5rem;
+    color: var(--brand-primary);
+    max-width: 28ch;
+    margin-inline: auto;
+  }
+  .hero-image-container ~ .hero-content .hero-subtitle { color: white; opacity: 0.85; }
+
+  .host-line {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    opacity: 0.5;
+    margin: 0;
+    font-style: italic;
+    color: var(--brand-primary);
+  }
+  .hero-image-container ~ .hero-content .host-line { color: white; opacity: 0.7; }
+
+  /* Sections header */
+  .sections-header {
+    display: flex; align-items: center; gap: 12px;
+    margin: 2rem 0 1rem;
+  }
+  .sections-header::before, .sections-header::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  }
+  .sections-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--brand-accent);
+    white-space: nowrap;
+  }
+
+  /* WhatsApp FAB */
+  .wa-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: #25D366;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(37,211,102,0.4);
+    transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+    z-index: 50;
+  }
+  .wa-fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 24px rgba(37,211,102,0.5);
+  }
+  .wa-fab:active { transform: scale(0.96); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wa-fab { transition: none; }
+    .wa-fab:hover { transform: none; }
+  }
+</style>

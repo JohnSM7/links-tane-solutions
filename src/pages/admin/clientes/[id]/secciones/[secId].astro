@@ -1,0 +1,133 @@
+---
+import AdminLayout from '../../../../../layouts/AdminLayout.astro'
+import EmojiInput from '../../../../../components/EmojiInput.astro'
+import { supabase } from '../../../../../lib/supabase'
+import type { Client, Section, Link } from '../../../../../lib/types'
+
+const { id, secId } = Astro.params
+
+const [{ data: client }, { data: section }] = await Promise.all([
+  supabase.from('clients').select('nombre').eq('id', id).single<Pick<Client, 'nombre'>>(),
+  supabase.from('sections').select('*').eq('id', secId).single<Section>(),
+])
+
+if (!client || !section) return Astro.redirect(`/admin/clientes/${id}`)
+
+const { data: links } = await supabase
+  .from('links').select('*').eq('section_id', secId).order('orden', { ascending: true })
+
+const sectionLinks = (links ?? []) as Link[]
+const saved = Astro.url.searchParams.get('saved')
+const error = Astro.url.searchParams.get('error')
+---
+
+<AdminLayout title={`${section.titulo} · ${client.nombre}`}>
+  <a href={`/admin/clientes/${id}`} class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-8">
+    ← Volver a {client.nombre}
+  </a>
+
+  <!-- Section form -->
+  <form action={`/admin/api/sections/${secId}`} method="POST" class="space-y-6 mb-12">
+    <input type="hidden" name="_method" value="PUT" />
+    <input type="hidden" name="client_id" value={id} />
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Título *</label>
+          <input name="titulo" type="text" required value={section.titulo}
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Slug (URL)</label>
+          <input name="slug" type="text" value={section.slug} pattern="[-a-z0-9]+"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Icono</label>
+          <EmojiInput name="icono" value={section.icono} />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Orden</label>
+          <input name="orden" type="number" value={section.orden} min="0"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div class="col-span-2 flex items-end pb-1">
+          <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <input type="checkbox" name="activo" value="true" checked={section.activo} class="rounded" />
+            Sección activa
+          </label>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Descripción corta</label>
+        <input name="descripcion" type="text" value={section.descripcion}
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Contenido (Markdown)</label>
+        <textarea name="contenido" rows="12"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y">{section.contenido}</textarea>
+      </div>
+    </div>
+
+    {saved && <p class="text-sm text-green-600 font-medium">✓ Guardado</p>}
+    {error && <p class="text-sm text-red-600">Error al guardar.</p>}
+
+    <div class="flex gap-3">
+      <button type="submit"
+        class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-700 transition-colors">
+        Guardar sección
+      </button>
+    </div>
+  </form>
+
+  <!-- Links manager -->
+  <div class="border-t border-gray-200 pt-8">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-base font-bold text-gray-900">Links de esta sección</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Para secciones tipo "Reseña" con botones a Booking, Airbnb, etc.</p>
+      </div>
+      <a href={`/admin/clientes/${id}/secciones/${secId}/links/nuevo`}
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+        + Añadir link
+      </a>
+    </div>
+
+    {sectionLinks.length === 0 ? (
+      <p class="text-sm text-gray-400">No hay links en esta sección.</p>
+    ) : (
+      <div class="space-y-2">
+        {sectionLinks.map(link => (
+          <div class="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3">
+            <span class="text-xl">{link.icono}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900">{link.titulo}</p>
+              <p class="text-xs text-gray-400 truncate">{link.url}</p>
+            </div>
+            <form action={`/admin/api/links/${link.id}`} method="POST" class="flex-shrink-0">
+              <input type="hidden" name="_method" value="DELETE" />
+              <input type="hidden" name="redirect" value={`/admin/clientes/${id}/secciones/${secId}`} />
+              <button type="submit" class="text-xs text-red-400 hover:text-red-600">Eliminar</button>
+            </form>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <!-- Delete section -->
+  <div class="border-t border-red-100 pt-8 mt-8">
+    <form action={`/admin/api/sections/${secId}`} method="POST"
+      onsubmit="return confirm('¿Eliminar esta sección?')">
+      <input type="hidden" name="_method" value="DELETE" />
+      <input type="hidden" name="client_id" value={id} />
+      <button type="submit" class="text-sm text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
+        Eliminar sección
+      </button>
+    </form>
+  </div>
+</AdminLayout>

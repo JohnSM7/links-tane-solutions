@@ -1,0 +1,194 @@
+---
+import PropertyLayout from '../../layouts/PropertyLayout.astro'
+import LinkCard from '../../components/LinkCard.astro'
+import { supabase } from '../../lib/supabase'
+import type { Client, Section, Link } from '../../lib/types'
+import { marked } from 'marked'
+
+const { slug, section: sectionSlug } = Astro.params
+
+const { data: client } = await supabase
+  .from('clients')
+  .select('*')
+  .eq('slug', slug)
+  .eq('activo', true)
+  .single<Client>()
+
+if (!client) return Astro.redirect('/', 302)
+
+const { data: section } = await supabase
+  .from('sections')
+  .select('*')
+  .eq('client_id', client.id)
+  .eq('slug', sectionSlug)
+  .eq('activo', true)
+  .single<Section>()
+
+if (!section) return Astro.redirect(`/${slug}`, 302)
+
+const { data: links } = await supabase
+  .from('links')
+  .select('*')
+  .eq('section_id', section.id)
+  .eq('activo', true)
+  .order('orden', { ascending: true })
+
+const sectionLinks = (links ?? []) as Link[]
+const htmlContent = section.contenido ? marked(section.contenido) : ''
+---
+
+<PropertyLayout client={client} title={section.titulo}>
+  <div class="max-w-md mx-auto px-4 pt-8 pb-12">
+
+    <!-- Back navigation -->
+    <a href={`/${slug}`} class="back-link">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      {client.nombre}
+    </a>
+
+    <!-- Section header -->
+    <header class="section-header animate-fade-up">
+      <div class="icon-display" aria-hidden="true">{section.icono}</div>
+      <h1 class="section-title">{section.titulo}</h1>
+
+      <div class="title-accent" aria-hidden="true">
+        <div class="accent-line" />
+        <svg width="8" height="8" viewBox="0 0 8 8" class="accent-diamond">
+          <path d="M4 0L8 4L4 8L0 4Z" fill="currentColor"/>
+        </svg>
+        <div class="accent-line" />
+      </div>
+
+      {section.descripcion && (
+        <p class="section-desc">{section.descripcion}</p>
+      )}
+    </header>
+
+    <!-- Links (review-type sections) -->
+    {sectionLinks.length > 0 && (
+      <div class="links-section">
+        {sectionLinks.length > 1 && (
+          <p class="links-label">Déjanos tu opinión</p>
+        )}
+        <div class="flex flex-col gap-3">
+          {sectionLinks.map((link, i) => (
+            <div class="link-item" style={`animation-delay: ${i * 80}ms`}>
+              <LinkCard
+                href={link.url}
+                icono={link.icono}
+                titulo={link.titulo}
+                descripcion={link.descripcion}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Markdown content -->
+    {htmlContent && (
+      <div
+        class={`prose max-w-none content-block ${sectionLinks.length > 0 ? 'has-links' : ''}`}
+        set:html={htmlContent}
+      />
+    )}
+  </div>
+</PropertyLayout>
+
+<style>
+  /* Back link */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    margin-bottom: 2rem;
+    opacity: 0.45;
+    color: var(--brand-primary);
+    text-decoration: none;
+    transition: opacity 180ms ease;
+  }
+  .back-link:hover { opacity: 0.75; }
+
+  /* Section header */
+  .section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--brand-primary) 10%, transparent);
+  }
+
+  .icon-display {
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--brand-primary);
+    margin: 0;
+  }
+
+  .title-accent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 80px;
+    margin: 0.9rem auto 0.85rem;
+    color: var(--brand-accent);
+  }
+  .accent-line { flex: 1; height: 1px; background: currentColor; opacity: 0.6; }
+  .accent-diamond { flex-shrink: 0; }
+
+  .section-desc {
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: var(--brand-primary);
+    opacity: 0.6;
+    font-style: italic;
+    margin: 0;
+  }
+
+  /* Links section */
+  .links-section { margin-bottom: 2rem; }
+
+  .links-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--brand-accent);
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .link-item {
+    animation: fadeUp 0.35s ease-out both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Content prose overrides */
+  .content-block { color: var(--brand-primary); }
+  .content-block.has-links {
+    padding-top: 1.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--brand-primary) 10%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .link-item { animation: none; }
+  }
+</style>

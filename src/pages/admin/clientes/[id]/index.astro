@@ -1,0 +1,587 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro'
+import { supabase } from '../../../../lib/supabase'
+import type { Client, Section } from '../../../../lib/types'
+
+const { id } = Astro.params
+
+const { data: client } = await supabase
+  .from('clients').select('*').eq('id', id).single<Client>()
+
+if (!client) return Astro.redirect('/admin/dashboard')
+
+const { data: sections } = await supabase
+  .from('sections').select('*').eq('client_id', id).order('orden', { ascending: true })
+
+const secs = (sections ?? []) as Section[]
+const error = Astro.url.searchParams.get('error')
+const saved = Astro.url.searchParams.get('saved')
+---
+
+<AdminLayout title={`Editar · ${client.nombre}`} wide>
+  <div class="flex gap-8 items-start">
+
+    <!-- ── FORM (left) ── -->
+    <div class="flex-1 min-w-0 space-y-8">
+
+      <form action={`/admin/api/clients/${id}`} method="POST" class="space-y-6 mb-12">
+        <input type="hidden" name="_method" value="PUT" />
+
+        <section class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Información básica</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Nombre *</label>
+              <input data-preview="nombre" name="nombre" type="text" required value={client.nombre}
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Slug (URL)</label>
+              <input name="slug" type="text" value={client.slug} pattern="[-a-z0-9]+"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Ciudad / Ubicación</label>
+              <input data-preview="ciudad" name="ciudad" type="text" value={client.ciudad}
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Texto adicional</label>
+              <input data-preview="contacto_extra" name="contacto_extra" type="text" value={client.contacto_extra}
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              <p class="text-xs text-gray-400 mt-1">Se muestra bajo el subtítulo</p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Título del hero</label>
+            <input data-preview="hero_titulo" name="hero_titulo" type="text" value={client.hero_titulo}
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Subtítulo</label>
+            <input data-preview="hero_subtitulo" name="hero_subtitulo" type="text" value={client.hero_subtitulo}
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">URL imagen portada</label>
+            <input data-preview="hero_image_url" name="hero_image_url" type="url" value={client.hero_image_url}
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+          </div>
+        </section>
+
+        <section class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Contacto</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">WhatsApp</label>
+              <input name="whatsapp" type="text" value={client.whatsapp}
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Email</label>
+              <input name="email" type="email" value={client.email}
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+          </div>
+        </section>
+
+        <section class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Colores de marca</h2>
+          <div class="grid grid-cols-3 gap-4">
+            {[
+              { label: 'Principal', name: 'brand_primary', val: client.brand_primary, cId: 'c-primary', tId: 't-primary', previewKey: 'brand_primary' },
+              { label: 'Fondo', name: 'brand_background', val: client.brand_background, cId: 'c-bg', tId: 't-bg', previewKey: 'brand_background' },
+              { label: 'Acento', name: 'brand_accent', val: client.brand_accent, cId: 'c-accent', tId: 't-accent', previewKey: 'brand_accent' },
+            ].map(({ label, name, val, cId, tId, previewKey }) => (
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                <div class="flex items-center gap-2">
+                  <input type="color" name={name} value={val} id={cId} data-preview={previewKey}
+                    class="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-1" />
+                  <input type="text" id={tId} value={val}
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div class="flex items-center gap-2 pt-1">
+            <input type="checkbox" name="activo" id="activo" checked={client.activo} value="true" class="rounded" />
+            <label for="activo" class="text-sm text-gray-600">Cliente activo (visible públicamente)</label>
+          </div>
+        </section>
+
+        {saved && <p class="text-sm text-green-600 font-medium">✓ Cambios guardados</p>}
+        {error && <p class="text-sm text-red-600">Error al guardar. Revisa los datos.</p>}
+
+        <div class="flex gap-3">
+          <button type="submit"
+            class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-700 transition-colors">
+            Guardar cambios
+          </button>
+          <a href="/admin/dashboard" class="px-6 py-2.5 rounded-lg text-sm text-gray-500 hover:text-gray-700">← Volver</a>
+        </div>
+      </form>
+
+      <!-- Logo (standalone form, outside main form) -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">Logo</h2>
+        <div class="flex items-center gap-5">
+          <div class="logo-preview-wrap flex-shrink-0">
+            {client.logo_url ? (
+              <img id="logo-current" src={client.logo_url} alt="Logo" class="logo-preview-img" />
+            ) : (
+              <div id="logo-placeholder" class="logo-preview-placeholder">
+                <span>{client.nombre.charAt(0)}</span>
+              </div>
+            )}
+          </div>
+          <div class="flex-1 space-y-3">
+            <p class="text-xs text-gray-400">PNG, JPG o SVG · Recomendado cuadrado, mín. 256×256px</p>
+
+            <!-- FALLBACK 1: form clásico sin JS — garantizado funcionar -->
+            <form action={`/admin/api/clients/${id}/upload-logo`} method="POST" enctype="multipart/form-data" class="flex items-center gap-3 flex-wrap">
+              <input type="file" name="logo" id="logo-file-input"
+                data-client-id={id}
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                required
+                class="text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-gray-700 file:text-xs file:font-medium file:cursor-pointer hover:file:border-indigo-400 hover:file:bg-indigo-50" />
+              <button type="submit" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-medium hover:bg-indigo-700 transition-colors">
+                Subir
+              </button>
+              <span id="logo-status" class="text-xs text-gray-400 italic"></span>
+            </form>
+
+            {client.logo_url && (
+              <form action={`/admin/api/clients/${id}/upload-logo`} method="POST">
+                <input type="hidden" name="remove_logo" value="true" />
+                <button type="submit" class="text-xs text-red-400 hover:text-red-600 mt-1">
+                  Eliminar logo actual
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <!-- Sections manager -->
+      <div class="border-t border-gray-200 pt-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-bold text-gray-900">Secciones</h2>
+          <a href={`/admin/clientes/${id}/secciones/nueva`}
+            class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+            + Añadir sección
+          </a>
+        </div>
+        {secs.length === 0 ? (
+          <p class="text-sm text-gray-400">Este cliente no tiene secciones todavía.</p>
+        ) : (
+          <div class="space-y-2">
+            {secs.map(sec => (
+              <div class="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3">
+                <span class="text-xl">{sec.icono}</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900">{sec.titulo}</p>
+                  <p class="text-xs text-gray-400 truncate">{sec.descripcion}</p>
+                </div>
+                {!sec.activo && <span class="text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">Oculta</span>}
+                <a href={`/admin/clientes/${id}/secciones/${sec.id}`}
+                  class="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex-shrink-0">Editar →</a>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <!-- Danger zone -->
+      <div class="border-t border-red-100 pt-8 mt-8">
+        <h2 class="text-xs font-semibold text-red-500 uppercase tracking-widest mb-3">Zona de peligro</h2>
+        <form action={`/admin/api/clients/${id}`} method="POST"
+          onsubmit="return confirm('¿Seguro que quieres eliminar este cliente y todas sus secciones? Esta acción no se puede deshacer.')">
+          <input type="hidden" name="_method" value="DELETE" />
+          <button type="submit" class="text-sm text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
+            Eliminar cliente
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── PREVIEW (right, sticky) ── -->
+    <div class="w-[320px] flex-shrink-0 sticky top-6 self-start">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 text-center">Vista previa</p>
+
+      <!-- Phone frame -->
+      <div class="phone-frame mx-auto">
+        <div class="phone-notch"></div>
+        <div class="phone-screen" id="preview-screen"
+          style={`background-color:${client.brand_background}; --p:${client.brand_primary}; --bg:${client.brand_background}; --a:${client.brand_accent};`}>
+
+          <!-- texture -->
+          <div class="screen-texture"></div>
+
+          <!-- Hero -->
+          <div class="prev-hero">
+            {client.hero_image_url ? (
+              <div class="prev-hero-img-wrap">
+                <img id="prev-hero-img" src={client.hero_image_url} alt="" class="prev-hero-img" />
+                <div class="prev-hero-img-overlay"></div>
+              </div>
+            ) : null}
+
+            <div class={`prev-hero-content ${client.hero_image_url ? 'over-image' : ''}`}>
+              {!client.hero_image_url && (
+                client.logo_url ? (
+                  <img id="prev-logo-img" src={client.logo_url} alt="Logo" class="prev-logo-img" />
+                ) : (
+                  <div class="prev-logo" id="prev-logo">{client.nombre.charAt(0)}</div>
+                )
+              )}
+              {client.ciudad && (
+                <p class="prev-eyebrow" id="prev-ciudad">{client.ciudad}</p>
+              )}
+              <h2 class="prev-title" id="prev-title">{client.hero_titulo || client.nombre}</h2>
+              <div class="prev-ornament" aria-hidden="true">
+                <span class="prev-line"></span>
+                <span class="prev-diamond">◆</span>
+                <span class="prev-line"></span>
+              </div>
+              {client.hero_subtitulo && (
+                <p class="prev-subtitle" id="prev-subtitle">{client.hero_subtitulo}</p>
+              )}
+              {client.contacto_extra && (
+                <p class="prev-extra" id="prev-extra">{client.contacto_extra}</p>
+              )}
+            </div>
+          </div>
+
+          <!-- Sections divider -->
+          {secs.length > 0 && (
+            <div class="prev-divider">
+              <span class="prev-divider-line"></span>
+              <span class="prev-divider-label">Información</span>
+              <span class="prev-divider-line"></span>
+            </div>
+          )}
+
+          <!-- Section cards -->
+          <div class="prev-sections">
+            {secs.filter(s => s.activo).map(sec => (
+              <div class="prev-card">
+                <div class="prev-card-icon">{sec.icono}</div>
+                <div class="prev-card-text">
+                  <p class="prev-card-title">{sec.titulo}</p>
+                  {sec.descripcion && <p class="prev-card-desc">{sec.descripcion}</p>}
+                </div>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="prev-card-arrow">
+                  <path d="M5 2.5L9.5 7L5 11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            ))}
+          </div>
+
+          <!-- Footer -->
+          <div class="prev-footer">TANE SOLUTIONS</div>
+        </div>
+        <div class="phone-home-bar"></div>
+      </div>
+
+      <p class="text-xs text-gray-400 text-center mt-3">Se actualiza al escribir</p>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<style>
+  /* ── Logo upload ── */
+  .logo-preview-wrap { width: 72px; height: 72px; flex-shrink: 0; }
+  .logo-preview-img {
+    width: 72px; height: 72px; border-radius: 16px;
+    object-fit: contain; border: 1px solid #e5e7eb;
+    background: #f9fafb;
+  }
+  .logo-preview-placeholder {
+    width: 72px; height: 72px; border-radius: 16px;
+    background: linear-gradient(135deg, #15264E 0%, #C8A064 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem; font-weight: 700; color: white;
+  }
+
+  /* ── Phone frame ── */
+  .phone-frame {
+    width: 280px;
+    background: #1a1a1a;
+    border-radius: 36px;
+    padding: 10px;
+    box-shadow: 0 0 0 1px #333, 0 24px 60px rgba(0,0,0,0.4), inset 0 0 0 1px #444;
+  }
+  .phone-notch {
+    width: 80px; height: 20px;
+    background: #1a1a1a;
+    border-radius: 0 0 14px 14px;
+    margin: 0 auto 4px;
+    position: relative; z-index: 2;
+  }
+  .phone-screen {
+    border-radius: 26px;
+    overflow-y: auto;
+    max-height: 560px;
+    position: relative;
+    scroll-behavior: smooth;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .phone-screen::-webkit-scrollbar { display: none; }
+  .phone-home-bar {
+    width: 80px; height: 4px;
+    background: #444;
+    border-radius: 4px;
+    margin: 8px auto 2px;
+  }
+
+  /* texture */
+  .screen-texture {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(circle, rgba(0,0,0,0.025) 1px, transparent 1px);
+    background-size: 14px 14px;
+    z-index: 0;
+  }
+
+  /* ── Hero ── */
+  .prev-hero { position: relative; }
+  .prev-hero-img-wrap { height: 120px; overflow: hidden; }
+  .prev-hero-img { width: 100%; height: 100%; object-fit: cover; }
+  .prev-hero-img-overlay {
+    position: absolute; top: 0; left: 0; right: 0; height: 120px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.5));
+  }
+
+  .prev-hero-content {
+    padding: 18px 16px 14px;
+    text-align: center;
+    position: relative; z-index: 1;
+  }
+  .prev-hero-content.over-image {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 10px 16px 14px;
+    color: white;
+  }
+
+  .prev-logo-img {
+    width: 44px; height: 44px; border-radius: 12px;
+    object-fit: contain; background: white;
+    margin: 0 auto 8px; display: block;
+  }
+
+  .prev-logo {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--p) 0%, var(--a) 100%);
+    color: white;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.25rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px;
+  }
+
+  .prev-eyebrow {
+    font-size: 0.5rem; letter-spacing: 0.18em;
+    text-transform: uppercase; font-weight: 500;
+    color: var(--a); margin: 0 0 4px;
+  }
+  .over-image .prev-eyebrow { color: rgba(255,255,255,0.75); }
+
+  .prev-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1rem; font-weight: 700; line-height: 1.2;
+    color: var(--p); margin: 0;
+  }
+  .over-image .prev-title { color: white; }
+
+  .prev-ornament {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; margin: 6px auto 5px; width: 60px;
+    color: var(--a);
+  }
+  .over-image .prev-ornament { color: rgba(255,255,255,0.5); }
+  .prev-line { flex: 1; height: 1px; background: currentColor; opacity: 0.5; }
+  .prev-diamond { font-size: 0.4rem; flex-shrink: 0; }
+
+  .prev-subtitle {
+    font-size: 0.6rem; line-height: 1.6;
+    color: var(--p); opacity: 0.65; margin: 0 0 3px;
+  }
+  .over-image .prev-subtitle { color: white; opacity: 0.85; }
+
+  .prev-extra {
+    font-size: 0.55rem; font-style: italic;
+    color: var(--p); opacity: 0.45; margin: 0;
+  }
+  .over-image .prev-extra { color: white; opacity: 0.65; }
+
+  /* ── Divider ── */
+  .prev-divider {
+    display: flex; align-items: center; gap: 8px;
+    margin: 10px 16px 8px;
+  }
+  .prev-divider-line {
+    flex: 1; height: 1px;
+    background: color-mix(in srgb, var(--p, #15264E) 12%, transparent);
+  }
+  .prev-divider-label {
+    font-size: 0.45rem; letter-spacing: 0.2em;
+    text-transform: uppercase; font-weight: 600;
+    color: var(--a); white-space: nowrap;
+  }
+
+  /* ── Section cards ── */
+  .prev-sections { padding: 0 10px; display: flex; flex-direction: column; gap: 6px; }
+
+  .prev-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--p, #15264E) 8%, transparent);
+    border-left: 2px solid transparent;
+    padding: 8px 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .prev-card-icon {
+    font-size: 1.1rem; width: 30px; height: 30px;
+    border-radius: 8px; flex-shrink: 0;
+    background: color-mix(in srgb, var(--p, #15264E) 8%, transparent);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .prev-card-text { flex: 1; min-width: 0; }
+  .prev-card-title {
+    font-size: 0.6rem; font-weight: 600; color: var(--p);
+    line-height: 1.2; margin: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .prev-card-desc {
+    font-size: 0.5rem; color: var(--p); opacity: 0.45;
+    margin: 1px 0 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .prev-card-arrow { color: var(--a); flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .prev-footer {
+    text-align: center; font-size: 0.45rem;
+    letter-spacing: 0.25em; opacity: 0.25;
+    padding: 16px 0 12px;
+    color: var(--p);
+  }
+</style>
+
+<script>
+  // ── Color sync ──
+  const colorPairs: [string, string][] = [['c-primary', 't-primary'], ['c-bg', 't-bg'], ['c-accent', 't-accent']]
+  const screen = document.getElementById('preview-screen')!
+
+  function applyColors() {
+    const p  = (document.getElementById('t-primary') as HTMLInputElement).value
+    const bg = (document.getElementById('t-bg') as HTMLInputElement).value
+    const a  = (document.getElementById('t-accent') as HTMLInputElement).value
+    screen.style.backgroundColor = bg
+    screen.style.setProperty('--p', p)
+    screen.style.setProperty('--bg', bg)
+    screen.style.setProperty('--a', a)
+  }
+
+  colorPairs.forEach(([cId, tId]) => {
+    const c = document.getElementById(cId) as HTMLInputElement
+    const t = document.getElementById(tId) as HTMLInputElement
+    c.addEventListener('input', () => { t.value = c.value; applyColors() })
+    t.addEventListener('input', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(t.value)) c.value = t.value
+      applyColors()
+    })
+  })
+
+  // ── Logo: live preview on file pick (upload handled by native form submit) ──
+  const fileInput = document.getElementById('logo-file-input') as HTMLInputElement | null
+  const statusEl  = document.getElementById('logo-status')
+
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0]
+      if (!file) return
+
+      const objUrl = URL.createObjectURL(file)
+      const current     = document.getElementById('logo-current') as HTMLImageElement | null
+      const placeholder = document.getElementById('logo-placeholder')
+      if (current) { current.src = objUrl }
+      else if (placeholder) {
+        const img = document.createElement('img')
+        img.src = objUrl; img.className = 'logo-preview-img'; img.id = 'logo-current'
+        placeholder.replaceWith(img)
+      }
+      const prevLogoImg = document.getElementById('prev-logo-img') as HTMLImageElement | null
+      const prevLogo    = document.getElementById('prev-logo')
+      if (prevLogoImg) { prevLogoImg.src = objUrl }
+      else if (prevLogo) {
+        const img = document.createElement('img')
+        img.src = objUrl; img.className = 'prev-logo-img'; img.id = 'prev-logo-img'
+        prevLogo.replaceWith(img)
+      }
+
+      if (statusEl) statusEl.textContent = `${file.name} — haz clic en Subir`
+    })
+  }
+
+  // ── Text field sync ──
+  const textMap: Record<string, string> = {
+    nombre:         'prev-logo,prev-title',
+    hero_titulo:    'prev-title',
+    hero_subtitulo: 'prev-subtitle',
+    contacto_extra: 'prev-extra',
+    ciudad:         'prev-ciudad',
+  }
+
+  document.querySelectorAll<HTMLInputElement>('[data-preview]').forEach(input => {
+    const key = input.dataset.preview!
+
+    input.addEventListener('input', () => {
+      const val = input.value.trim()
+
+      if (key === 'nombre') {
+        const logo = document.getElementById('prev-logo')
+        if (logo) logo.textContent = val.charAt(0) || '?'
+        // only update title if hero_titulo is empty
+        const heroInput = document.querySelector<HTMLInputElement>('[data-preview="hero_titulo"]')
+        if (!heroInput?.value.trim()) {
+          const el = document.getElementById('prev-title')
+          if (el) el.textContent = val
+        }
+        return
+      }
+
+      if (key === 'hero_titulo') {
+        const el = document.getElementById('prev-title')
+        if (el) {
+          const nombreInput = document.querySelector<HTMLInputElement>('[data-preview="nombre"]')
+          el.textContent = val || nombreInput?.value.trim() || ''
+        }
+        return
+      }
+
+      const elId = key === 'hero_subtitulo' ? 'prev-subtitle'
+                 : key === 'contacto_extra'  ? 'prev-extra'
+                 : key === 'ciudad'           ? 'prev-ciudad'
+                 : key === 'hero_image_url'   ? 'prev-hero-img'
+                 : null
+
+      if (!elId) return
+      const el = document.getElementById(elId)
+      if (!el) return
+
+      if (key === 'hero_image_url') {
+        ;(el as HTMLImageElement).src = val
+        el.style.display = val ? 'block' : 'none'
+      } else {
+        el.textContent = val
+        el.style.display = val ? '' : 'none'
+      }
+    })
+  })
+</script>

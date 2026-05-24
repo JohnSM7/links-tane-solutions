@@ -1,0 +1,62 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { supabase } from '../../lib/supabase'
+import type { Client } from '../../lib/types'
+
+const { data: clients } = await supabase
+  .from('clients')
+  .select('*')
+  .order('created_at', { ascending: false })
+
+const allClients = (clients ?? []) as Client[]
+---
+
+<AdminLayout title="Clientes">
+  {allClients.length === 0 ? (
+    <div class="text-center py-16 text-gray-400">
+      <p class="text-4xl mb-4">🏠</p>
+      <p class="text-sm">No hay clientes todavía.</p>
+      <a href="/admin/clientes/nuevo" class="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700">
+        Crear el primero →
+      </a>
+    </div>
+  ) : (
+    <div class="space-y-3">
+      {allClients.map(client => (
+        <div class="bg-white rounded-xl border border-gray-200 px-5 py-4 flex items-center gap-4">
+          <!-- Color swatch -->
+          <div
+            class="w-10 h-10 rounded-full flex-shrink-0 border border-white shadow-sm"
+            style={`background: ${client.brand_primary}`}
+          />
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <p class="font-semibold text-gray-900 text-sm">{client.nombre}</p>
+              {!client.activo && (
+                <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactivo</span>
+              )}
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">
+              links.tanesolutions.com/<strong>{client.slug}</strong>
+              {client.ciudad && ` · ${client.ciudad}`}
+            </p>
+          </div>
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <a
+              href={`/${client.slug}`}
+              target="_blank"
+              class="text-xs text-gray-400 hover:text-gray-600"
+              title="Ver página"
+            >↗</a>
+            <a
+              href={`/admin/clientes/${client.id}`}
+              class="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              Editar →
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</AdminLayout>

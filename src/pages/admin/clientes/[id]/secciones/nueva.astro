@@ -1,0 +1,103 @@
+---
+import AdminLayout from '../../../../../layouts/AdminLayout.astro'
+import EmojiInput from '../../../../../components/EmojiInput.astro'
+import { supabase } from '../../../../../lib/supabase'
+import type { Client } from '../../../../../lib/types'
+
+const { id } = Astro.params
+
+const { data: client } = await supabase
+  .from('clients').select('nombre').eq('id', id).single<Pick<Client, 'nombre'>>()
+
+if (!client) return Astro.redirect('/admin/dashboard')
+
+const error = Astro.url.searchParams.get('error')
+---
+
+<AdminLayout title={`Nueva sección · ${client.nombre}`}>
+  <a href={`/admin/clientes/${id}`} class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-8">
+    ← Volver a {client.nombre}
+  </a>
+
+  <form action="/admin/api/sections" method="POST" class="space-y-6">
+    <input type="hidden" name="client_id" value={id} />
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Título *</label>
+          <input id="input-titulo" name="titulo" type="text" required placeholder="Normativa de la vivienda"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">
+            Slug (URL)
+            <span class="text-gray-400 font-normal ml-1">— auto</span>
+          </label>
+          <input id="input-slug" name="slug" type="text" required placeholder="normativa" pattern="[-a-z0-9]+"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Icono (emoji)</label>
+          <EmojiInput name="icono" placeholder="📋" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Orden</label>
+          <input name="orden" type="number" value="0" min="0"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Descripción corta</label>
+        <input name="descripcion" type="text" placeholder="Normas de uso y convivencia"
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Contenido (Markdown)</label>
+        <textarea name="contenido" rows="10" placeholder="# Título&#10;&#10;Escribe el contenido en Markdown..."
+          class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y"></textarea>
+      </div>
+    </div>
+
+    {error && <p class="text-sm text-red-600">Error al crear la sección. El slug puede estar duplicado.</p>}
+
+    <div class="flex gap-3">
+      <button type="submit"
+        class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-700 transition-colors">
+        Crear sección
+      </button>
+      <a href={`/admin/clientes/${id}`} class="px-6 py-2.5 rounded-lg text-sm text-gray-500 hover:text-gray-700">
+        Cancelar
+      </a>
+    </div>
+  </form>
+</AdminLayout>
+
+<script>
+  const titulo = document.getElementById('input-titulo') as HTMLInputElement
+  const slug   = document.getElementById('input-slug') as HTMLInputElement
+  let userEdited = false
+
+  function toSlug(str: string): string {
+    return str
+      .normalize('NFD')
+      .replace(/\p{Mn}/gu, '')   // remove combining diacritics (accents)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/[\s_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+  }
+
+  titulo.addEventListener('input', () => {
+    if (!userEdited) slug.value = toSlug(titulo.value)
+  })
+
+  slug.addEventListener('input', () => {
+    userEdited = slug.value !== toSlug(titulo.value)
+  })
+</script>
