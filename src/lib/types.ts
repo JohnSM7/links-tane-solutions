@@ -25,6 +25,7 @@ export interface Section {
   icono: string
   descripcion: string
   contenido: string
+  pdf_url: string
   orden: number
   activo: boolean
   created_at: string
