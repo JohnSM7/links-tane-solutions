@@ -6,6 +6,7 @@ runConfig:
 
 scripts:
   build: npm ci && npm run build
+  run: npm start
 
 env:
   - variable: HOST
