@@ -232,7 +232,8 @@ const saved = Astro.url.searchParams.get('saved')
             <div class={`prev-hero-content ${client.hero_image_url ? 'over-image' : ''}`}>
               {!client.hero_image_url && (
                 client.logo_url ? (
-                  <img id="prev-logo-img" src={client.logo_url} alt="Logo" class="prev-logo-img" />
+                  <img id="prev-logo-img" src={client.logo_url} alt="Logo" class="prev-logo-img"
+                    style="width:44px;height:44px;object-fit:contain;border-radius:10px;background:white;display:block;margin:0 auto 8px;flex-shrink:0" />
                 ) : (
                   <div class="prev-logo" id="prev-logo">{client.nombre.charAt(0)}</div>
                 )
