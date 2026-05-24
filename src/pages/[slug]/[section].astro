@@ -102,36 +102,30 @@ const htmlContent = section.contenido ? marked(section.contenido) : ''
   {section.pdf_url && (
     <div class={`pdf-section ${htmlContent || sectionLinks.length > 0 ? 'has-content' : ''}`}>
 
-      <!-- Botón siempre visible (especialmente útil en móvil) -->
+      <!-- Botón descargar / abrir en nueva pestaña -->
       <div class="pdf-btn-wrap">
         <a href={section.pdf_url} target="_blank" rel="noopener noreferrer" class="pdf-btn">
-          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true" class="flex-shrink-0">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" class="flex-shrink-0">
             <path d="M11 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-6-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
             <path d="M11 2v6h6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
             <path d="M7 13h6M7 10h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
           <span>Abrir documento completo</span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" class="flex-shrink-0 opacity-50">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" class="flex-shrink-0 opacity-40">
             <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </a>
       </div>
 
-      <!-- Iframe embebido — solo desktop, oculto en móvil -->
+      <!-- Visor embebido via Google Docs — funciona en iOS, Android y desktop -->
       <div class="pdf-embed-wrap">
         <iframe
-          src={`${section.pdf_url}#toolbar=1&view=FitH&zoom=page-width`}
+          src={`https://docs.google.com/viewer?url=${encodeURIComponent(section.pdf_url)}&embedded=true`}
           class="pdf-embed"
           title={`PDF: ${section.titulo}`}
           loading="lazy"
-          allowfullscreen
         />
       </div>
-
-      <!-- Aviso móvil -->
-      <p class="pdf-mobile-hint">
-        📄 Tu dispositivo no muestra el PDF aquí — usa el botón de arriba para abrirlo.
-      </p>
 
     </div>
   )}
@@ -286,21 +280,9 @@ const htmlContent = section.contenido ? marked(section.contenido) : ''
     display: block;
   }
 
-  /* Aviso móvil — oculto en desktop */
-  .pdf-mobile-hint {
-    display: none;
-    text-align: center;
-    font-size: 0.8rem;
-    opacity: 0.5;
-    margin-top: 0.5rem;
-    color: var(--brand-primary);
-  }
-
-  /* En móvil: ocultar iframe, mostrar aviso */
   @media (max-width: 767px) {
-    .pdf-embed-wrap { display: none; }
-    .pdf-mobile-hint { display: block; }
-    .pdf-btn { font-size: 1rem; padding: 18px 20px; }
+    .pdf-embed { height: calc(100vh - 180px); min-height: 400px; }
+    .pdf-btn { padding: 18px 20px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
